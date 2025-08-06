@@ -30,3 +30,18 @@ exports.sendLien = async function (email, lien) {
 
   return response.data;
 };
+
+exports.sendWelcome = async function (email) {
+  const phpURL = "https://zemindo-ai.vercel.app/mail/envoyer_mail";
+
+  const form = new FormData();
+  form.append("destinataire", email);
+  form.append("sujet", "Bienvenue dans notre Newsletter 🎉");
+  form.append("contenu", `Bienvenue $email,\n\nMerci de vous être inscrit !\nVous recevrez désormais les dernières nouvelles concernant les cagnottes.\n\n— L'équipe Bessan Arch`);
+
+  const response = await axios.post(phpURL, form, {
+    headers: form.getHeaders()
+  });
+
+  return response.data;
+};

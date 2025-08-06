@@ -1,5 +1,5 @@
 const db = require('../db');
-const { sendCode, sendLien} = require('../utils/mailer');
+const { sendCode, sendLien, sendWelcome} = require('../utils/mailer');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
 
@@ -109,3 +109,18 @@ exports.renvoilien = async (req, res) => {
   }
 };
 
+exports.welcome = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: "Champs invalides" });
+  }
+
+
+  try {
+    await sendWelcome(email);
+    res.json({ message: "email reçu" });
+  } catch (e) {
+    console.error("Erreur envoi mail:", e.message);
+    res.status(500).json({ message: "Erreur d'envoi du mail" });
+  }
+};
