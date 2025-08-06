@@ -31,7 +31,7 @@ exports.sendLien = async function (email, lien) {
   return response.data;
 };
 
-exports.sendWelcome = async function (email) {
+exports.welcome = async function (email) {
   const phpURL = "https://zemindo-ai.vercel.app/mail/envoyer_mail";
 
   const form = new FormData();
