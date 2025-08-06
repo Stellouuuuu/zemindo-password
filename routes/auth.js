@@ -5,7 +5,7 @@ const { requestReset, confirmCode, subscribe, renvoilien} = require('../controll
 router.post('/reset-password', requestReset);
 router.post('/confirm-code', confirmCode);
 router.post('/subscribe', subscribe);
-router.get('/renvoilien', renvoilien);
+router.post('/renvoilien', renvoilien);
 
 
 module.exports = router;
