@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { requestReset, confirmCode, subscribe, renvoilien} = require('../controllers/authController');
+const { sendWelcome } = require('../utils/mailer');
 
 router.post('/reset-password', requestReset);
 router.post('/confirm-code', confirmCode);
 router.post('/subscribe', subscribe);
 router.post('/renvoilien', renvoilien);
-
+router.post('/sendwelcome', sendWelcome);
 
 module.exports = router;
