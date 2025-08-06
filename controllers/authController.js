@@ -1,5 +1,5 @@
 const db = require('../db');
-const { sendCode } = require('../utils/mailer');
+const { sendCode, sendLien} = require('../utils/mailer');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
 
