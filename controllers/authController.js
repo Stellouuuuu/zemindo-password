@@ -93,20 +93,19 @@ exports.subscribe = (req, res) => {
 };
 
 exports.renvoilien = async (req, res) => {
-  return 'ok';
-  // const { email} = req.body;
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: "Champs invalides" });
+  }
 
-  // if (!email) {
-  //   return res.status(400).json({ message: "Champs invalides" });
-  // }
+  const lien = "http://localhost:5173/newpassword";
 
-  // const lien = "http://localhost:5173/newpassword";
-
-  // try {
-  //   await sendLien(email, lien); 
-  //   res.json({ message: "Lien envoyé à votre adresse email" });
-  // } catch (e) {
-  //   console.error("Erreur envoi mail:", e.message);
-  //   res.status(500).json({ message: "Erreur d'envoi du mail" });
-  // }
+  try {
+    await sendLien(email, lien);
+    res.json({ message: "Lien envoyé à votre adresse email" });
+  } catch (e) {
+    console.error("Erreur envoi mail:", e.message);
+    res.status(500).json({ message: "Erreur d'envoi du mail" });
+  }
 };
+
