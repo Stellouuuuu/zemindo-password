@@ -80,7 +80,7 @@ exports.subscribe = (req, res) => {
       }
 
       // Envoi mail via PHP externe (axios)
-      axios.post('http://localhost:8000/send-welcome.php', { email })
+      axios.post('https://zemindo-password.vercel.app/send-welcome.php', { email })
         .then(() => {
           res.status(200).json({ message: "Inscription réussie !" });
         })
