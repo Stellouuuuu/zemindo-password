@@ -134,28 +134,52 @@ exports.sendWelcome = async (req, res) => {
   }
 };
 
-exports.sendNewsletterToAll = async (req, res) => {
+exports.sendNewsletterToAll = (req, res) => {
   console.log("🔍 Requête vers la base de données en cours...");
-  try {
-    const [rows] = await db.query("SELECT email FROM newsletter");
-    console.log(rows.length);
-    if (rows.length === 0) {
+
+  db.query("SELECT email FROM newsletter", async (err, rows) => {
+    if (err) {
+      console.error("Erreur lors de la requête :", err.message);
+      return res.status(500).json({ message: "Erreur serveur" });
+    }
+
+    if (!rows || rows.length === 0) {
       return res.status(404).json({ message: "Aucun abonné trouvé" });
     }
 
+    // Envoi des mails un par un (avec await dans une fonction async)
     for (const row of rows) {
       const email = row.email;
       console.log(email);
       try {
-        await newcagnotte(email); 
+        await newcagnotte(email);
       } catch (e) {
         console.error(`Erreur d'envoi à ${email}:`, e.message);
       }
     }
 
-    res.json({ message: "Newsletter envoyée à tous les abonnés" });
-  } catch (error) {
-    console.error("Erreur lors de l'envoi de la newsletter:", error.message);
-    res.status(500).json({ message: "Erreur serveur" });
-  }
+    return res.json({ message: "Newsletter envoyée à tous les abonnés" });
+  });
 };
+
+exports.info = (req, res) => {
+  const userId = req.query.id;
+
+  db.query(
+    `SELECT CONCAT(first_name, ' ', last_name) AS fullName, email FROM users WHERE id = ?`,
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error("Erreur lors de la récupération des infos utilisateur :", err);
+        return res.status(500).json({ message: "Erreur serveur" });
+      }
+
+      if (!results || results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      res.json(results[0]);
+    }
+  );
+};
+
