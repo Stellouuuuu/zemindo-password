@@ -135,6 +135,7 @@ exports.sendWelcome = async (req, res) => {
 };
 
 exports.sendNewsletterToAll = async (req, res) => {
+  console.log("🔍 Requête vers la base de données en cours...");
   try {
     const [rows] = await db.query("SELECT email FROM newsletter");
 
