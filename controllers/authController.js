@@ -60,37 +60,37 @@ exports.confirmCode = async (req, res) => {
   }
 };
 
-exports.subscribe = (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ message: "Email requis." });
+// exports.subscribe = (req, res) => {
+//   const { email } = req.body;
+//   if (!email) return res.status(400).json({ message: "Email requis." });
 
-  db.query("SELECT id FROM newsletter WHERE email = ?", [email], (err, rows) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Erreur serveur." });
-    }
-    if (rows.length > 0) {
-      return res.status(200).json({ message: "Déjà inscrit." });
-    }
+//   db.query("SELECT id FROM newsletter WHERE email = ?", [email], (err, rows) => {
+//     if (err) {
+//       console.error(err);
+//       return res.status(500).json({ message: "Erreur serveur." });
+//     }
+//     if (rows.length > 0) {
+//       return res.status(200).json({ message: "Déjà inscrit." });
+//     }
 
-    db.query("INSERT INTO newsletter (email) VALUES (?)", [email], (err2) => {
-      if (err2) {
-        console.error(err2);
-        return res.status(500).json({ message: "Erreur serveur." });
-      }
+//     db.query("INSERT INTO newsletter (email) VALUES (?)", [email], (err2) => {
+//       if (err2) {
+//         console.error(err2);
+//         return res.status(500).json({ message: "Erreur serveur." });
+//       }
 
-      // Envoi mail via PHP externe (axios)
-      axios.post('https://zemindo-password.vercel.app/send-welcome.php', { email })
-        .then(() => {
-          res.status(200).json({ message: "Inscription réussie !" });
-        })
-        .catch(mailErr => {
-          console.error(mailErr);
-          res.status(500).json({ message: "Erreur lors de l'envoi du mail." });
-        });
-    });
-  });
-};
+//       // Envoi mail via PHP externe (axios)
+//       axios.post('https://zemindo-password.vercel.app/send-welcome.php', { email })
+//         .then(() => {
+//           res.status(200).json({ message: "Inscription réussie !" });
+//         })
+//         .catch(mailErr => {
+//           console.error(mailErr);
+//           res.status(500).json({ message: "Erreur lors de l'envoi du mail." });
+//         });
+//     });
+//   });
+// };
 
 exports.renvoilien = async (req, res) => {
   const { email } = req.body;
@@ -137,6 +137,8 @@ exports.sendWelcome = async (req, res) => {
 exports.sendNewsletterToAll = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT email FROM newsletter");
+
+console.log("Tables :", rows);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Aucun abonné trouvé" });
