@@ -115,12 +115,46 @@ exports.sendWelcome = async (req, res) => {
     return res.status(400).json({ message: "Champs invalides" });
   }
 
-
   try {
+    // Vérifie si l’email est déjà enregistré
+    const [rows] = await db.query('SELECT * FROM newsletter WHERE email = ?', [email]);
+
+    // S’il n’existe pas, on l’insère
+    if (rows.length === 0) {
+      await db.query('INSERT INTO newsletter (email) VALUES (?)', [email]);
+    }
+
+    // Envoie l’email de bienvenue
     await welcome(email);
-    res.json({ message: "email reçu" });
+
+    res.json({ message: "Email enregistré et message envoyé." });
   } catch (e) {
-    console.error("Erreur envoi mail:", e.message);
-    res.status(500).json({ message: "Erreur d'envoi du mail" });
+    console.error("Erreur:", e.message);
+    res.status(500).json({ message: "Erreur lors de l’envoi ou enregistrement" });
+  }
+};
+
+exports.sendNewsletterToAll = async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT email FROM newsletter");
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Aucun abonné trouvé" });
+    }
+
+    for (const row of rows) {
+      const email = row.email;
+
+      try {
+        await newcagnotte(email); 
+      } catch (e) {
+        console.error(`Erreur d'envoi à ${email}:`, e.message);
+      }
+    }
+
+    res.json({ message: "Newsletter envoyée à tous les abonnés" });
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de la newsletter:", error.message);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };

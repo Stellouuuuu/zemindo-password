@@ -45,3 +45,18 @@ exports.welcome = async function (email) {
 
   return response.data;
 };
+
+exports.newcagnotte = async function (email) {
+  const phpURL = "https://zemindo-ai.vercel.app/mail/envoyer_mail";
+
+  const form = new FormData();
+  form.append("destinataire", email);
+  form.append("sujet", "Nouvelle Cagnotte");
+  form.append("contenu", `Salut $email,\n\nUne nouvelle cagnotte vient d'être crée.\n\n`);
+
+  const response = await axios.post(phpURL, form, {
+    headers: form.getHeaders()
+  });
+
+  return response.data;
+};
