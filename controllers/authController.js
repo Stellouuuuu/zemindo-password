@@ -138,7 +138,6 @@ exports.sendNewsletterToAll = async (req, res) => {
   console.log("🔍 Requête vers la base de données en cours...");
   try {
     const [rows] = await db.query("SELECT email FROM newsletter");
-
     console.log(rows.length);
     if (rows.length === 0) {
       return res.status(404).json({ message: "Aucun abonné trouvé" });

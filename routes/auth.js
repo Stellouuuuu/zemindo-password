@@ -7,5 +7,5 @@ router.post('/confirm-code', confirmCode);
 //router.post('/subscribe', subscribe);
 router.post('/renvoilien', renvoilien);
 router.post('/sendwelcome', sendWelcome);
-router.post('/sendNewsletterToAll', sendNewsletterToAll);
+router.get('/sendNewsletterToAll', sendNewsletterToAll);
 module.exports = router;
