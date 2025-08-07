@@ -4,7 +4,7 @@ const { requestReset, confirmCode, subscribe, renvoilien, sendWelcome, sendNewsl
 
 router.post('/reset-password', requestReset);
 router.post('/confirm-code', confirmCode);
-router.post('/subscribe', subscribe);
+//router.post('/subscribe', subscribe);
 router.post('/renvoilien', renvoilien);
 router.post('/sendwelcome', sendWelcome);
 router.post('/sendNewsletterToAll', sendNewsletterToAll);

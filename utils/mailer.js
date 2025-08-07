@@ -37,7 +37,7 @@ exports.welcome = async function (email) {
   const form = new FormData();
   form.append("destinataire", email);
   form.append("sujet", "Bienvenue dans notre Newsletter 🎉");
-  form.append("contenu", `Bienvenue $email,\n\nMerci de vous être inscrit !\nVous recevrez désormais les dernières nouvelles concernant les cagnottes.\n\n`);
+  form.append("contenu", `Bienvenue ${email},\n\nMerci de vous être inscrit !\nVous recevrez désormais les dernières nouvelles concernant les cagnottes.\n\n`);
 
   const response = await axios.post(phpURL, form, {
     headers: form.getHeaders()
@@ -52,7 +52,7 @@ exports.newcagnotte = async function (email) {
   const form = new FormData();
   form.append("destinataire", email);
   form.append("sujet", "Nouvelle Cagnotte");
-  form.append("contenu", `Salut $email,\n\nUne nouvelle cagnotte vient d'être crée.\n\n`);
+  form.append("contenu", `Salut ${email},\n\nUne nouvelle cagnotte vient d'être créée.\n\n`);
 
   const response = await axios.post(phpURL, form, {
     headers: form.getHeaders()
