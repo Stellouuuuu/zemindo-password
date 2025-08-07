@@ -143,6 +143,7 @@ exports.sendNewsletterToAll = async (req, res) => {
     }
 
     for (const row of rows) {
+      console.log("ok");
       const email = row.email;
       console.log(email);
       try {
