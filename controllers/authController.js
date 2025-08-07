@@ -138,12 +138,12 @@ exports.sendNewsletterToAll = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT email FROM newsletter");
 
+    console.log(rows.length);
     if (rows.length === 0) {
       return res.status(404).json({ message: "Aucun abonné trouvé" });
     }
 
     for (const row of rows) {
-      console.log("ok");
       const email = row.email;
       console.log(email);
       try {
