@@ -144,7 +144,7 @@ exports.sendNewsletterToAll = async (req, res) => {
 
     for (const row of rows) {
       const email = row.email;
-
+      console.log(email);
       try {
         await newcagnotte(email); 
       } catch (e) {
