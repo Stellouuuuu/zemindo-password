@@ -199,6 +199,7 @@ exports.info = (req, res) => {
 };
 
 exports.uploadAvatar = (req, res) => {
+  console.log("ok");
   upload.single("avatar")(req, res, function (err) {
     if (err) {
       console.error("Erreur lors du téléversement :", err.message);
