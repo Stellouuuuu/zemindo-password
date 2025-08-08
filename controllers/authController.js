@@ -205,20 +205,28 @@ exports.uploadAvatar = (req, res) => {
       return res.status(500).json({ message: "Erreur lors du téléversement de l'image" });
     }
 
-    const userId = req.body.userId;
-    if (!req.file || !userId) {
-      return res.status(400).json({ message: "Image ou ID utilisateur manquant." });
+    const email = req.body.email;
+    if (!req.file || !email) {
+      return res.status(400).json({ message: "Image ou email manquant." });
     }
 
     const imageUrl = `/uploads/avatars/${req.file.filename}`;
 
-    db.query("UPDATE users SET avatar = ? WHERE id = ?", [imageUrl, userId], (err) => {
+    // Met à jour avec l'email au lieu de userId
+    db.query("UPDATE users SET avatar = ? WHERE email = ?", [imageUrl, email], (err) => {
       if (err) {
         console.error("Erreur base de données :", err.message);
         return res.status(500).json({ message: "Erreur de mise à jour du profil" });
       }
 
-      res.json({ message: "Photo de profil mise à jour", imageUrl });
+      // Facultatif : récupérer le nom complet pour renvoyer au frontend
+      db.query("SELECT CONCAT(first_name, ' ', last_name) AS fullName FROM users WHERE email = ?", [email], (err, results) => {
+        if (err || results.length === 0) {
+          return res.json({ message: "Photo de profil mise à jour", imageUrl });
+        }
+        res.json({ message: "Photo de profil mise à jour", imageUrl, fullName: results[0].fullName });
+      });
     });
   });
 };
+
