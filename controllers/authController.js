@@ -2,6 +2,21 @@ const db = require('../db');
 const { sendCode, sendLien, welcome, newcagnotte} = require('../utils/mailer');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
+const multer = require("multer");
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "../uploads/avatars"));
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + "_" + file.originalname;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({ storage });
+
 
 let tempCodes = {};
 
@@ -183,3 +198,27 @@ exports.info = (req, res) => {
   );
 };
 
+exports.uploadAvatar = (req, res) => {
+  upload.single("avatar")(req, res, function (err) {
+    if (err) {
+      console.error("Erreur lors du téléversement :", err.message);
+      return res.status(500).json({ message: "Erreur lors du téléversement de l'image" });
+    }
+
+    const userId = req.body.userId;
+    if (!req.file || !userId) {
+      return res.status(400).json({ message: "Image ou ID utilisateur manquant." });
+    }
+
+    const imageUrl = `/uploads/avatars/${req.file.filename}`;
+
+    db.query("UPDATE users SET avatar = ? WHERE id = ?", [imageUrl, userId], (err) => {
+      if (err) {
+        console.error("Erreur base de données :", err.message);
+        return res.status(500).json({ message: "Erreur de mise à jour du profil" });
+      }
+
+      res.json({ message: "Photo de profil mise à jour", imageUrl });
+    });
+  });
+};

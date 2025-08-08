@@ -8,6 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/reset', authRoutes);
+app.use("/api/uploads", express.static(path.join(__dirname, "/uploads/")));
+
 
 
 app.listen(3006, () => {
