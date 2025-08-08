@@ -2,20 +2,32 @@ const db = require('../db');
 const { sendCode, sendLien, welcome, newcagnotte} = require('../utils/mailer');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
-const path = require("path");
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads/avatars"));
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "_" + file.originalname;
-    cb(null, uniqueName);
-  }
+// Configure Cloudinary avec tes infos
+cloudinary.config({
+  cloud_name: "dvnfoapof",
+  api_key: "488262554191638",
+  api_secret: "Oa-dJhC-Cz1yFsv3yTEU_87Ul-0",
 });
 
+// Configure multer pour utiliser Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'avatars',
+      allowed_formats: ['jpg', 'png', 'jpeg'],
+      public_id: `${Date.now()}_${file.originalname.split('.')[0]}`
+    };
+  },
+});
+
+
 const upload = multer({ storage });
+
 
 
 let tempCodes = {};
@@ -199,35 +211,37 @@ exports.info = (req, res) => {
 };
 
 exports.uploadAvatar = (req, res) => {
-  upload.single("avatar")(req, res, function (err) {
+  upload.single("avatar")(req, res, (err) => {
     if (err) {
-      console.error("Erreur lors du téléversement :", err); // <- afficher err complet
-      return res.status(500).json({ message: "Erreur lors du téléversement de l'image" });
+      console.error("Erreur upload cloudinary:", err);
+      return res.status(500).json({ message: "Erreur lors du téléversement" });
     }
 
     const email = req.body.email;
-    console.log(email);
     if (!req.file || !email) {
       return res.status(400).json({ message: "Image ou email manquant." });
     }
 
-    const imageUrl = `/uploads/avatars/${req.file.filename}`;
+    console.log("Email reçu :", req.body.email);
+console.log("Fichier reçu :", req.file);
 
-    // Met à jour avec l'email au lieu de userId
+    // URL de l'image sur Cloudinary
+    const imageUrl = req.file.path;
+
+    // Mets à jour en base avec l'URL Cloudinary
     db.query("UPDATE users SET avatar = ? WHERE email = ?", [imageUrl, email], (err) => {
       if (err) {
         console.error("Erreur base de données :", err.message);
-        return res.status(500).json({ message: "Erreur de mise à jour du profil" });
+        return res.status(500).json({ message: "Erreur mise à jour profil" });
       }
 
-      // Facultatif : récupérer le nom complet pour renvoyer au frontend
+      // Optionnel : récupérer nom complet
       db.query("SELECT CONCAT(first_name, ' ', last_name) AS fullName FROM users WHERE email = ?", [email], (err, results) => {
         if (err || results.length === 0) {
-          return res.json({ message: "Photo de profil mise à jour", imageUrl });
+          return res.json({ message: "Photo mise à jour", imageUrl });
         }
-        res.json({ message: "Photo de profil mise à jour", imageUrl, fullName: results[0].fullName });
+        res.json({ message: "Photo mise à jour", imageUrl, fullName: results[0].fullName });
       });
     });
   });
 };
-
