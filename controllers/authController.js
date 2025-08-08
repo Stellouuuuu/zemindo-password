@@ -199,14 +199,14 @@ exports.info = (req, res) => {
 };
 
 exports.uploadAvatar = (req, res) => {
-  console.log("ok");
   upload.single("avatar")(req, res, function (err) {
     if (err) {
-      console.error("Erreur lors du téléversement :", err.message);
+      console.error("Erreur lors du téléversement :", err); // <- afficher err complet
       return res.status(500).json({ message: "Erreur lors du téléversement de l'image" });
     }
 
     const email = req.body.email;
+    console.log(email);
     if (!req.file || !email) {
       return res.status(400).json({ message: "Image ou email manquant." });
     }
