@@ -238,7 +238,7 @@ console.log("Fichier reçu :", req.file);
       // Optionnel : récupérer nom complet
       db.query("SELECT CONCAT(first_name, ' ', last_name) AS fullName FROM users WHERE email = ?", [email], (err, results) => {
         if (err || results.length === 0) {
-          return res.json({ message: "Photo mise à jour", imageUrl });
+          return res.json({ message: "Erreur mise à jour", imageUrl });
         }
         res.json({ message: "Photo mise à jour", imageUrl, fullName: results[0].fullName });
       });
