@@ -1,4 +1,5 @@
 const db = require('../db');
+const jwt = require("jsonwebtoken");
 const { sendCode, sendLien, welcome, newcagnotte} = require('../utils/mailer');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
@@ -210,8 +211,6 @@ exports.info = (req, res) => {
   );
 };
 
-const jwt = require("jsonwebtoken");
-
 exports.uploadAvatar = (req, res) => {
   // 1. Récupérer et vérifier le token
   const authHeader = req.headers.authorization;
@@ -260,4 +259,38 @@ exports.uploadAvatar = (req, res) => {
       }
     );
   });
+};
+
+exports.getProfile = (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Token manquant ou invalide." });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  let userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.id; // ou decoded.userId selon ton payload JWT
+  } catch (err) {
+    return res.status(403).json({ message: "Token invalide." });
+  }
+
+  db.query(
+    "SELECT fullName, avatar FROM users WHERE id = ?",
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error("Erreur DB:", err.message);
+        return res.status(500).json({ message: "Erreur serveur." });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé." });
+      }
+
+      res.json(results[0]);
+    }
+  );
 };
