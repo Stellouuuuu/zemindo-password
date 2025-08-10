@@ -210,38 +210,54 @@ exports.info = (req, res) => {
   );
 };
 
+const jwt = require("jsonwebtoken");
+
 exports.uploadAvatar = (req, res) => {
+  // 1. Récupérer et vérifier le token
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Token manquant" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  let userId;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.id; // ou decoded.email selon ce que tu mets dans le payload
+  } catch (error) {
+    return res.status(403).json({ message: "Token invalide" });
+  }
+
+  // 2. Gestion de l'upload
   upload.single("avatar")(req, res, (err) => {
     if (err) {
       console.error("Erreur upload cloudinary:", err);
       return res.status(500).json({ message: "Erreur lors du téléversement" });
     }
 
-    const email = req.body.email;
-    if (!req.file || !email) {
-      return res.status(400).json({ message: "Image ou email manquant." });
+    if (!req.file) {
+      return res.status(400).json({ message: "Image manquante." });
     }
 
-    console.log("Email reçu :", req.body.email);
-console.log("Fichier reçu :", req.file);
-
-    // URL de l'image sur Cloudinary
     const imageUrl = req.file.path;
 
-    // Mets à jour en base avec l'URL Cloudinary
-    db.query("UPDATE users SET avatar = ? WHERE email = ?", [imageUrl, email], (err) => {
-      if (err) {
-        console.error("Erreur base de données :", err.message);
-        return res.status(500).json({ message: "Erreur mise à jour profil" });
-      }
-
-      // Optionnel : récupérer nom complet
-      db.query("SELECT CONCAT(first_name, ' ', last_name) AS fullName FROM users WHERE email = ?", [email], (err, results) => {
-        if (err || results.length === 0) {
-          return res.json({ message: "Erreur mise à jour", imageUrl });
+    // 3. Mise à jour dans la BDD
+    db.query(
+      "UPDATE users SET avatar = ? WHERE id = ?",
+      [imageUrl, userId],
+      (err, result) => {
+        if (err) {
+          console.error("Erreur base de données :", err.message);
+          return res.status(500).json({ message: "Erreur mise à jour profil" });
         }
-        res.json({ message: "Photo mise à jour", imageUrl, fullName: results[0].fullName });
-      });
-    });
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ message: "Utilisateur non trouvé." });
+        }
+
+        res.json({ message: "Photo mise à jour avec succès", imageUrl });
+      }
+    );
   });
 };
