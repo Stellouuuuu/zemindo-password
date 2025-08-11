@@ -1,5 +1,4 @@
 const db = require('../db');
-const jwt = require("jsonwebtoken");
 const { sendCode, sendLien, welcome, newcagnotte} = require('../utils/mailer');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
@@ -211,8 +210,10 @@ exports.info = (req, res) => {
   );
 };
 
+const jwt = require("jsonwebtoken");
+
 exports.uploadAvatar = (req, res) => {
-  // 1. Récupérer et vérifier le token
+  // Vérifier token
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ message: "Token manquant" });
@@ -223,12 +224,12 @@ exports.uploadAvatar = (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    userId = decoded.id; // ou decoded.email selon ce que tu mets dans le payload
+    userId = decoded.id;
   } catch (error) {
     return res.status(403).json({ message: "Token invalide" });
   }
 
-  // 2. Gestion de l'upload
+  // Upload fichier
   upload.single("avatar")(req, res, (err) => {
     if (err) {
       console.error("Erreur upload cloudinary:", err);
@@ -241,56 +242,61 @@ exports.uploadAvatar = (req, res) => {
 
     const imageUrl = req.file.path;
 
-    // 3. Mise à jour dans la BDD
-    db.query(
-      "UPDATE users SET avatar = ? WHERE id = ?",
-      [imageUrl, userId],
-      (err, result) => {
-        if (err) {
-          console.error("Erreur base de données :", err.message);
-          return res.status(500).json({ message: "Erreur mise à jour profil" });
-        }
-
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ message: "Utilisateur non trouvé." });
-        }
-
-        res.json({ message: "Photo mise à jour avec succès", imageUrl });
-      }
-    );
-  });
-};
-
-exports.getProfile = (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Token manquant ou invalide." });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  let userId;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    userId = decoded.id; // ou decoded.userId selon ton payload JWT
-  } catch (err) {
-    return res.status(403).json({ message: "Token invalide." });
-  }
-
-  db.query(
-    "SELECT fullName, avatar FROM users WHERE id = ?",
-    [userId],
-    (err, results) => {
+    // Mise à jour BDD
+    db.query("UPDATE users SET avatar = ? WHERE id = ?", [imageUrl, userId], (err, result) => {
       if (err) {
-        console.error("Erreur DB:", err.message);
-        return res.status(500).json({ message: "Erreur serveur." });
+        console.error("Erreur base de données :", err.message);
+        return res.status(500).json({ message: "Erreur mise à jour profil" });
       }
 
-      if (results.length === 0) {
+      if (result.affectedRows === 0) {
         return res.status(404).json({ message: "Utilisateur non trouvé." });
       }
 
-      res.json(results[0]);
+      res.json({ message: "Photo mise à jour avec succès", imageUrl });
+    });
+  });
+};
+
+
+exports.getUserProfile = async (req, res) => {
+  // Récupérer le token dans l'en-tête Authorization
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) {
+    return res.status(401).json({ message: "Token manquant" });
+  }
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // Appel vers l'API externe avec le token pour obtenir id et email
+    const response = await axios.get("https://zemindo-api.vercel.app/api/users/", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const userData = response.data; // { id, email }
+
+    if (!userData.id) {
+      return res.status(401).json({ message: "Token invalide ou utilisateur non trouvé" });
     }
-  );
+
+    // Interroger ta base locale avec l'id récupéré
+    db.query(
+      "SELECT CONCAT(first_name, ' ', last_name) AS fullName, email, avatar FROM users WHERE id = ?",
+      [userData.id],
+      (err, results) => {
+        if (err) {
+          console.error("Erreur DB :", err);
+          return res.status(500).json({ message: "Erreur serveur" });
+        }
+        if (results.length === 0) {
+          return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+        res.json(results[0]); // { fullName, email, avatar }
+      }
+    );
+
+  } catch (error) {
+    console.error("Erreur appel API externe :", error.response?.data || error.message);
+    return res.status(401).json({ message: "Token invalide ou erreur API externe" });
+  }
 };
