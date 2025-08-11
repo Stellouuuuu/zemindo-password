@@ -219,6 +219,7 @@ exports.uploadAvatar = async (req, res) => {
   }
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
 
+  console.log(token);
   // Appel API externe pour récupérer id et email
   let userData;
   try {
