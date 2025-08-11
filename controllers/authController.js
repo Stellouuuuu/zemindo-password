@@ -210,26 +210,32 @@ exports.info = (req, res) => {
   );
 };
 
-const jwt = require("jsonwebtoken");
 
-exports.uploadAvatar = (req, res) => {
-  // Vérifier token
+exports.uploadAvatar = async (req, res) => {
+  // Récupérer token dans le header
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ message: "Token manquant" });
   }
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
 
-  const token = authHeader.split(" ")[1];
-  let userId;
-
+  // Appel API externe pour récupérer id et email
+  let userData;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    userId = decoded.id;
+    const response = await axios.get("https://zemindo-api.vercel.app/api/users/", { // idéalement remplacer /2 par dynamique
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    userData = response.data;
   } catch (error) {
-    return res.status(403).json({ message: "Token invalide" });
+    console.error("Erreur appel API externe :", error.response?.data || error.message);
+    return res.status(401).json({ message: "Token invalide ou erreur API externe" });
   }
 
-  // Upload fichier
+  if (!userData.id) {
+    return res.status(401).json({ message: "Utilisateur non trouvé via API externe" });
+  }
+
+  // Upload fichier via multer
   upload.single("avatar")(req, res, (err) => {
     if (err) {
       console.error("Erreur upload cloudinary:", err);
@@ -242,8 +248,8 @@ exports.uploadAvatar = (req, res) => {
 
     const imageUrl = req.file.path;
 
-    // Mise à jour BDD
-    db.query("UPDATE users SET avatar = ? WHERE id = ?", [imageUrl, userId], (err, result) => {
+    // Mise à jour BDD avec l'id récupéré
+    db.query("UPDATE users SET avatar = ? WHERE id = ?", [imageUrl, userData.id], (err, result) => {
       if (err) {
         console.error("Erreur base de données :", err.message);
         return res.status(500).json({ message: "Erreur mise à jour profil" });
