@@ -226,9 +226,8 @@ exports.uploadAvatar = async (req, res) => {
     const response = await axios.get("https://zemindo-api.vercel.app/api/users/2", {
       headers: { Authorization: `Bearer ${token}` }
     });
-console.log("API externe userData:", response.data);
 
-    userData = response.data;
+    userData = response.data.user;
   } catch (error) {
     console.error("Erreur appel API externe :", error.response?.data || error.message);
     return res.status(401).json({ message: " oh Token invalide ou erreur API externe" }); 
@@ -281,8 +280,7 @@ exports.getUserProfile = async (req, res) => {
     const response = await axios.get("https://zemindo-api.vercel.app/api/users/2", {
       headers: { Authorization: `Bearer ${token}` }
     });
-
-    const userData = response.data;
+   const userData = response.data.user; 
 
     if (!userData.id) {
       return res.status(401).json({ message: "Token invalide ou utilisateur non trouvé" });
