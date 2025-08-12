@@ -229,7 +229,7 @@ exports.uploadAvatar = async (req, res) => {
     userData = response.data;
   } catch (error) {
     console.error("Erreur appel API externe :", error.response?.data || error.message);
-    return res.status(401).json({ message: "Token invalide ou erreur API externe" });
+    return res.status(401).json({ message: " oh Token invalide ou erreur API externe" }); 
   }
 
   if (!userData.id) {
