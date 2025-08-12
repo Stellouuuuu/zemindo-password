@@ -9,7 +9,7 @@ router.post('/sendwelcome', sendWelcome);
 router.get('/sendNewsletterToAll', sendNewsletterToAll);
 router.get('/user/profile', getUserProfile);
 router.post("/uploadAvatar", uploadAvatar);
-router.post("/getUserInfo", getUserInfo);
-router.post("/updateUserInfo", updateUserInfo);
+router.get("/getUserInfo", getUserInfo);
+router.patch("/updateUserInfo", updateUserInfo);
 
 module.exports = router;
