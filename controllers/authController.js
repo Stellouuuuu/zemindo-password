@@ -303,7 +303,7 @@ exports.getUserInfo = async (req, res) => {
     }
 
     // Récupérer infos dans ta BDD locale
-    const query = `SELECT first_name, last_name, phone_number, city, country FROM users WHERE id = ?`;
+    const query = `SELECT first_name, last_name, email, phone_number, city, country FROM users WHERE id = ?`; 
     db.query(query, [userData.id], (err, results) => {
       if (err) {
         console.error("Erreur DB :", err);
