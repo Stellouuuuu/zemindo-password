@@ -317,6 +317,7 @@ exports.getUserInfo = async (req, res) => {
       res.json({
         nom: user.first_name || "",
         prenom: user.last_name || "",
+        email: user.email || "",
         telephone: user.phone_number || "",
         ville: user.city || "",
         pays: user.country || ""
@@ -348,6 +349,7 @@ exports.updateUserInfo = async (req, res) => {
     const allowedFields = {
       nom: "first_name",
       prenom: "last_name",
+      email: "email",
       telephone: "phone_number",
       ville: "city",
       pays: "country"
