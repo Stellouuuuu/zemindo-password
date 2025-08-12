@@ -226,6 +226,8 @@ exports.uploadAvatar = async (req, res) => {
     const response = await axios.get("https://zemindo-api.vercel.app/api/users/2", {
       headers: { Authorization: `Bearer ${token}` }
     });
+console.log("API externe userData:", response.data);
+
     userData = response.data;
   } catch (error) {
     console.error("Erreur appel API externe :", error.response?.data || error.message);
