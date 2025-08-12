@@ -189,27 +189,6 @@ exports.sendNewsletterToAll = (req, res) => {
   });
 };
 
-exports.info = (req, res) => {
-  const userId = req.query.id;
-
-  db.query(
-    `SELECT CONCAT(first_name, ' ', last_name) AS fullName, email FROM users WHERE id = ?`,
-    [userId],
-    (err, results) => {
-      if (err) {
-        console.error("Erreur lors de la récupération des infos utilisateur :", err);
-        return res.status(500).json({ message: "Erreur serveur" });
-      }
-
-      if (!results || results.length === 0) {
-        return res.status(404).json({ message: "Utilisateur non trouvé" });
-      }
-
-      res.json(results[0]);
-    }
-  );
-};
-
 
 exports.uploadAvatar = async (req, res) => {
   // Récupérer token dans le header
@@ -301,6 +280,108 @@ exports.getUserProfile = async (req, res) => {
         res.json(results[0]); // { fullName, email, avatar }
       }
     );
+
+  } catch (error) {
+    console.error("Erreur appel API externe :", error.response?.data || error.message);
+    return res.status(401).json({ message: "Token invalide ou erreur API externe" });
+  }
+};
+
+exports.getUserInfo = async (req, res) => {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).json({ message: "Token manquant" });
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+
+  try {
+    // Récupérer userId via API externe
+    const response = await axios.get("https://zemindo-api.vercel.app/api/users/2", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const userData = response.data.user;
+    if (!userData?.id) {
+      return res.status(401).json({ message: "Token invalide ou utilisateur non trouvé" });
+    }
+
+    // Récupérer infos dans ta BDD locale
+    const query = `SELECT first_name, last_name, phone_number, city, country FROM users WHERE id = ?`;
+    db.query(query, [userData.id], (err, results) => {
+      if (err) {
+        console.error("Erreur DB :", err);
+        return res.status(500).json({ message: "Erreur serveur" });
+      }
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      const user = results[0];
+      res.json({
+        nom: user.first_name || "",
+        prenom: user.last_name || "",
+        telephone: user.phone_number || "",
+        ville: user.city || "",
+        pays: user.country || ""
+      });
+    });
+
+  } catch (error) {
+    console.error("Erreur appel API externe :", error.response?.data || error.message);
+    return res.status(401).json({ message: "Token invalide ou erreur API externe" });
+  }
+};
+
+// Mettre à jour les infos utilisateur
+exports.updateUserInfo = async (req, res) => {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).json({ message: "Token manquant" });
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+
+  try {
+    // Récupérer userId via API externe
+    const response = await axios.get("https://zemindo-api.vercel.app/api/users/2", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const userData = response.data.user;
+    if (!userData?.id) {
+      return res.status(401).json({ message: "Token invalide ou utilisateur non trouvé" });
+    }
+
+    const allowedFields = {
+      nom: "first_name",
+      prenom: "last_name",
+      telephone: "phone_number",
+      ville: "city",
+      pays: "country"
+    };
+
+    const fieldsToUpdate = {};
+    for (const key in allowedFields) {
+      if (req.body[key] !== undefined) {
+        fieldsToUpdate[allowedFields[key]] = req.body[key];
+      }
+    }
+
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      return res.status(400).json({ message: "Aucun champ valide à mettre à jour" });
+    }
+
+    const setClause = Object.keys(fieldsToUpdate)
+      .map((field) => `${field} = ?`)
+      .join(", ");
+    const values = Object.values(fieldsToUpdate);
+    values.push(userData.id);
+
+    const query = `UPDATE users SET ${setClause} WHERE id = ?`;
+
+    db.query(query, values, (err, result) => {
+      if (err) {
+        console.error("Erreur DB :", err);
+        return res.status(500).json({ message: "Erreur serveur" });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      res.json({ message: "Informations mises à jour avec succès" });
+    });
 
   } catch (error) {
     console.error("Erreur appel API externe :", error.response?.data || error.message);
