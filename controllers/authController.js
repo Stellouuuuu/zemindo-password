@@ -257,7 +257,7 @@ exports.uploadAvatar = async (req, res) => {
       }
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Utilisateur non trouvé." });
+        return res.status(404).json({ message: "oh Utilisateur non trouvé." });
       }
 
       res.json({ message: "Photo mise à jour avec succès", imageUrl });
